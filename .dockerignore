@@ -1,0 +1,15 @@
+# Git and Cache
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Large Raw Datasets (preserve processed PNG samples)
+dataset/raw/*.tif
+
+# Virtual environments
+venv/
+.venv/
+env/

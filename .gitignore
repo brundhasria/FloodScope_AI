@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Large Datasets & Remote Sensing Imagery
+dataset/processed/runs/*
+!dataset/processed/.gitkeep
+dataset/raw/*
+!dataset/raw/.gitkeep
+dataset/labels/*
+!dataset/labels/.gitkeep
+*.tif
+*.tiff
+*.nc
+*.hdf
+*.tar.gz
+*.zip
+
+# Operating System
+.DS_Store
+Thumbs.db

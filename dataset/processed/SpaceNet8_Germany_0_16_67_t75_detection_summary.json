@@ -1,0 +1,42 @@
+{
+  "status": "SUCCESS",
+  "summary": {
+    "total_pixels": 1690000,
+    "valid_pixels": 1690000,
+    "invalid_pixels": 0,
+    "changed_pixels": 125532,
+    "valid_area_change_pct": 7.4279,
+    "threshold": 75.0,
+    "method": "grayscale_diff",
+    "morphology_applied": true,
+    "morph_kernel_size": 3
+  },
+  "warnings": [
+    "DISCLAIMER: Detections represent generic radiometric/surface candidate changes, NOT confirmed floodwater.",
+    "Candidate changes may arise from atmospheric cloud cover, shadows, seasonal canopy shifts, agriculture, or sensor geometry.",
+    "Ground-truth flood accuracy cannot be verified without independent, validated bi-temporal flood reference labels."
+  ],
+  "metadata": {
+    "dimensions": [
+      1300,
+      1300
+    ],
+    "channels": 3,
+    "opencv_version": "4.13.0",
+    "input_pre_type": "<class 'pathlib._local.WindowsPath'>",
+    "input_post_type": "<class 'pathlib._local.WindowsPath'>",
+    "config": {
+      "threshold": 75.0,
+      "method": "grayscale_diff",
+      "apply_morphology": true,
+      "morph_kernel_size": 3,
+      "overlay_color_bgr": [
+        0,
+        0,
+        255
+      ],
+      "overlay_alpha": 0.5
+    }
+  },
+  "error": null
+}

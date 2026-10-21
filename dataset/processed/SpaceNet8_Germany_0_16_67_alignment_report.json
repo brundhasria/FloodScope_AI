@@ -1,0 +1,138 @@
+{
+  "status": "SUCCESS",
+  "target_grid": "pre",
+  "grid_dimensions": [
+    1300,
+    1300
+  ],
+  "affine_matrix": [
+    [
+      0.7463999999993979,
+      0.0,
+      -0.3280839182889578
+    ],
+    [
+      0.0,
+      0.7463999999993979,
+      -0.6418446070332092
+    ]
+  ],
+  "valid_overlap_pixels": 1690000,
+  "valid_overlap_ratio": 1.0,
+  "compatibility": {
+    "is_compatible": true,
+    "crs_matched": true,
+    "overlap_pct_pre": 100.0,
+    "overlap_pct_post": 99.8501,
+    "intersection_bounds": {
+      "lon_min": 6.9177180913920315,
+      "lon_max": 6.922583965847683,
+      "lat_min": 50.48728614478734,
+      "lat_max": 50.492152019242994
+    },
+    "tiepoint_offset_px": [
+      0.4396,
+      0.8599
+    ],
+    "scale_ratio": [
+      1.339764,
+      1.339764
+    ],
+    "warnings": []
+  },
+  "pre_info": {
+    "file_name": "SpaceNet8_Germany_0_16_67_PRE.tif",
+    "file_path": "C:\\Users\\priya dharshini.S\\Downloads\\FloodScope_AI\\FloodScope_AI\\dataset\\raw\\SpaceNet8_Germany_0_16_67_PRE.tif",
+    "file_size_bytes": 3330496,
+    "loader": "opencv",
+    "channels": 3,
+    "height": 1300,
+    "width": 1300,
+    "dtype": "uint8",
+    "min_val": 0.0,
+    "max_val": 255.0
+  },
+  "post_info": {
+    "file_name": "SpaceNet8_Germany_0_16_67_POST.tif",
+    "file_path": "C:\\Users\\priya dharshini.S\\Downloads\\FloodScope_AI\\FloodScope_AI\\dataset\\raw\\SpaceNet8_Germany_0_16_67_POST.tif",
+    "file_size_bytes": 9124983,
+    "loader": "tifffile",
+    "channels": 3,
+    "height": 1743,
+    "width": 1743,
+    "dtype": "uint8",
+    "min_val": 0.0,
+    "max_val": 255.0
+  },
+  "meta_pre": {
+    "file_name": "SpaceNet8_Germany_0_16_67_PRE.tif",
+    "has_georeference": true,
+    "crs": "EPSG:4326",
+    "crs_epsg": 4326,
+    "tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      6.9177180913920315,
+      50.492152019242994,
+      0.0
+    ],
+    "pixel_scale": [
+      3.74298035050102e-06,
+      3.74298035050102e-06,
+      0.0
+    ],
+    "bounds": {
+      "lon_min": 6.9177180913920315,
+      "lon_max": 6.922583965847683,
+      "lat_min": 50.48728614478734,
+      "lat_max": 50.492152019242994
+    },
+    "width": 1300,
+    "height": 1300,
+    "pixel_res_deg": [
+      3.74298035050102e-06,
+      3.74298035050102e-06
+    ],
+    "estimated_res_m": [
+      0.265,
+      0.417
+    ]
+  },
+  "meta_post": {
+    "file_name": "SpaceNet8_Germany_0_16_67_POST.tif",
+    "has_georeference": true,
+    "crs": "EPSG:4326",
+    "crs_epsg": 4326,
+    "tiepoint": [
+      0.0,
+      0.0,
+      0.0,
+      6.917716863380372,
+      50.492154421654746,
+      0.0
+    ],
+    "pixel_scale": [
+      2.793760533611708e-06,
+      2.793760533611708e-06,
+      0.0
+    ],
+    "bounds": {
+      "lon_min": 6.917716863380372,
+      "lon_max": 6.9225863879904574,
+      "lat_min": 50.48728489704466,
+      "lat_max": 50.492154421654746
+    },
+    "width": 1743,
+    "height": 1743,
+    "pixel_res_deg": [
+      2.793760533611708e-06,
+      2.793760533611708e-06
+    ],
+    "estimated_res_m": [
+      0.198,
+      0.311
+    ]
+  },
+  "warnings": []
+}

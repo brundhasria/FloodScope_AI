@@ -1,0 +1,9 @@
+services:
+  floodscope:
+    build: .
+    container_name: floodscope-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    restart: unless-stopped

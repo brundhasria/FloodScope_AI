@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FloodScope AI — Satellite Candidate Change Detection</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="logo-group">
+          <div class="logo-icon">🛰️</div>
+          <div>
+            <h1 class="app-title">FloodScope AI</h1>
+            <p class="app-subtitle">Satellite Imagery Analysis & Candidate Surface Change Detection</p>
+          </div>
+        </div>
+        <div class="header-badges">
+          <span class="badge badge-tech" id="opencv-badge">OpenCV 5.0.0</span>
+          <span class="badge badge-tech" id="python-badge">Python 3.14</span>
+          <span class="badge badge-status" id="system-status">● System Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MANDATORY SCIENTIFIC DISCLAIMER BANNER -->
+    <section class="scientific-disclaimer" aria-label="Scientific Interpretation Disclaimer">
+      <div class="disclaimer-icon">⚠️</div>
+      <div class="disclaimer-text">
+        <strong>SCIENTIFIC INTERPRETATION NOTICE: Candidate Surface Changes — Not Confirmed Flooding</strong>
+        <p>
+          Detected anomalies represent generic pixel-level intensity and radiometric deltas between satellite captures.
+          Potential sources of observed differences include seasonal vegetation canopy dynamics, crop phenology, agricultural plowing,
+          atmospheric cloud shadows, and solar elevation geometry. Detections are <strong>unbenchmarked against independent floodwater ground truth</strong>
+          and must not be interpreted as confirmed floodwater or flood boundaries.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-layout">
+      <!-- Left Panel: Controls & Ingestion -->
+      <aside class="control-panel">
+        <div class="panel-card">
+          <h2 class="card-title">1. Data Ingestion Mode</h2>
+          
+          <div class="tab-group" role="tablist">
+            <button class="tab-btn active" id="tab-sample-btn" role="tab" aria-selected="true">
+              Verified Sample Pair
+            </button>
+            <button class="tab-btn" id="tab-upload-btn" role="tab" aria-selected="false">
+              Custom Image Upload
+            </button>
+          </div>
+
+          <!-- Mode A: Preset Sample Tile -->
+          <div class="tab-content active" id="mode-sample-content">
+            <div class="form-group">
+              <label for="sample-select">Dataset Scene:</label>
+              <select id="sample-select" class="form-control">
+                <option value="SpaceNet8_Germany_0_16_67">SpaceNet 8 Germany (Tile 0_16_67) [Aligned 1300×1300]</option>
+              </select>
+              <span class="form-hint">Pre-aligned bi-temporal optical capture with sub-pixel affine transformation (EPSG:4326).</span>
+            </div>
+          </div>
+
+          <!-- Mode B: User File Upload -->
+          <div class="tab-content" id="mode-upload-content">
+            <form id="upload-form">
+              <div class="form-group">
+                <label for="upload-before">Before Image (Aligned RGB/Greyscale):</label>
+                <input type="file" id="upload-before" accept="image/png,image/jpeg,image/tiff" class="file-input">
+                <span class="form-hint" id="before-file-name">No file selected (Max 25MB)</span>
+              </div>
+              <div class="form-group">
+                <label for="upload-after">After Image (Matching Dimensions):</label>
+                <input type="file" id="upload-after" accept="image/png,image/jpeg,image/tiff" class="file-input">
+                <span class="form-hint" id="after-file-name">No file selected (Max 25MB)</span>
+              </div>
+              <div class="form-group">
+                <label for="upload-mask">Optional Overlap Mask (255=valid, 0=nodata):</label>
+                <input type="file" id="upload-mask" accept="image/png,image/jpeg" class="file-input">
+                <span class="form-hint" id="mask-file-name">Optional (defaults to 100% valid footprint)</span>
+              </div>
+            </form>
+          </div>
+
+          <hr class="divider">
+
+          <h2 class="card-title">2. Detection Baseline Parameters</h2>
+
+          <!-- Parameter: Threshold Slider -->
+          <div class="form-group">
+            <div class="slider-label-row">
+              <label for="threshold-slider">Difference Threshold ($\Delta$):</label>
+              <span class="slider-val" id="threshold-val">35.0</span>
+            </div>
+            <input type="range" id="threshold-slider" min="5" max="150" step="1" value="35" class="slider-input">
+            <div class="preset-buttons">
+              <button class="btn-chip" data-val="25">25 (Sensitive)</button>
+              <button class="btn-chip active" data-val="35">35 (Default)</button>
+              <button class="btn-chip" data-val="50">50 (Moderate)</button>
+              <button class="btn-chip" data-val="75">75 (High Contrast)</button>
+            </div>
+            <span class="form-hint">Cutoff delta (0–255) for candidate change classification.</span>
+          </div>
+
+          <!-- Parameter: Difference Method -->
+          <div class="form-group">
+            <label for="method-select">Difference Formulation:</label>
+            <select id="method-select" class="form-control">
+              <option value="grayscale_diff" selected>Grayscale Luminance Delta (cv2.absdiff)</option>
+              <option value="color_diff">Per-Band Euclidean Distance (3D RGB)</option>
+            </select>
+          </div>
+
+          <!-- Parameter: Morphology Checkbox -->
+          <div class="form-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="morph-toggle" checked>
+              <span class="checkbox-label">Apply Morphological Noise Filter (Opening)</span>
+            </label>
+            <span class="form-hint">Suppresses single-pixel noise and sensor speckle artifacts.</span>
+          </div>
+
+          <!-- Parameter: Morph Kernel Size -->
+          <div class="form-group" id="kernel-group">
+            <label for="kernel-select">Morphological Kernel Size:</label>
+            <select id="kernel-select" class="form-control">
+              <option value="3" selected>3 × 3 Rectangular Structuring Element</option>
+              <option value="5">5 × 5 Rectangular Structuring Element</option>
+              <option value="7">7 × 7 Rectangular Structuring Element</option>
+            </select>
+          </div>
+
+          <button id="run-btn" class="btn btn-primary">
+            <span id="run-btn-text">Execute Candidate Detection</span>
+            <div class="spinner hidden" id="run-spinner"></div>
+          </button>
+        </div>
+
+        <!-- Metrics & Summary Card -->
+        <div class="panel-card" id="metrics-card">
+          <h2 class="card-title">3. Quantitative Summary</h2>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <span class="metric-label">Total Grid Pixels</span>
+              <span class="metric-value" id="m-total-pixels">—</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Valid Footprint Pixels</span>
+              <span class="metric-value" id="m-valid-pixels">—</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Candidate Changed Pixels</span>
+              <span class="metric-value highlight-metric" id="m-changed-pixels">—</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Valid Area Change %</span>
+              <span class="metric-value highlight-pct" id="m-change-pct">—</span>
+              <span class="metric-subtext">Candidate Surface Deltas Only</span>
+            </div>
+          </div>
+          <div class="metric-notes" id="metric-notes">
+            <span class="status-indicator" id="metric-status">Awaiting Execution</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Panel: Visual Inspection Gallery -->
+      <section class="display-panel">
+        <!-- Visualizer Navigation Tabs -->
+        <div class="view-tabs" role="tablist">
+          <button class="view-tab-btn active" data-view="overlay" role="tab">Change Highlight Overlay</button>
+          <button class="view-tab-btn" data-view="mask" role="tab">Candidate Change Mask</button>
+          <button class="view-tab-btn" data-view="diff" role="tab">Intensity Difference Map</button>
+          <button class="view-tab-btn" data-view="comparison" role="tab">Side-by-Side (Pre vs Post)</button>
+          <button class="view-tab-btn" data-view="diagnostics" role="tab">Spatial Alignment Diagnostics</button>
+        </div>
+
+        <!-- Alert Notification Bar -->
+        <div class="alert-box hidden" id="error-alert" role="alert">
+          <span class="alert-icon">❌</span>
+          <span class="alert-message" id="error-msg">Error executing analysis.</span>
+          <button class="alert-close" id="alert-close-btn">&times;</button>
+        </div>
+
+        <!-- Active Viewer Container -->
+        <div class="viewer-viewport">
+          <!-- View 1: Red Candidate Change Overlay -->
+          <div class="view-pane active" id="pane-overlay">
+            <div class="pane-header">
+              <h3>Candidate Surface Changes Overlay (Red = Observed Radiometric Delta)</h3>
+              <span class="pane-tag">Overlay Alpha: 50% | Base: Post-Event Scene</span>
+            </div>
+            <div class="image-wrapper">
+              <img id="img-overlay" src="" alt="Candidate Surface Change Overlay" class="main-img">
+              <div class="empty-placeholder" id="placeholder-overlay">
+                <span>Click "Execute Candidate Detection" to generate change visualization.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 2: Binary Candidate Change Mask -->
+          <div class="view-pane" id="pane-mask">
+            <div class="pane-header">
+              <h3>Binary Candidate Change Mask (255 = Candidate Change, 0 = Unchanged / Invalid)</h3>
+              <span class="pane-tag">Excludes Invalid Border Footprint</span>
+            </div>
+            <div class="image-wrapper">
+              <img id="img-mask" src="" alt="Candidate Change Mask" class="main-img">
+              <div class="empty-placeholder" id="placeholder-mask">
+                <span>Candidate change mask not yet loaded.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 3: Raw Intensity Difference Map -->
+          <div class="view-pane" id="pane-diff">
+            <div class="pane-header">
+              <h3>Raw Absolute Difference Map (Greyscale 0–255)</h3>
+              <span class="pane-tag">Pre-Threshold Radiometric Delta</span>
+            </div>
+            <div class="image-wrapper">
+              <img id="img-diff" src="" alt="Raw Absolute Difference Map" class="main-img">
+              <div class="empty-placeholder" id="placeholder-diff">
+                <span>Difference image not yet loaded.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 4: Side-by-Side Comparison -->
+          <div class="view-pane" id="pane-comparison">
+            <div class="pane-header">
+              <h3>Pre-Event Capture vs Post-Event Capture</h3>
+              <span class="pane-tag">Common 1300×1300 Resampled Grid</span>
+            </div>
+            <div class="split-view-container">
+              <div class="split-card">
+                <h4>Reference Capture (PRE)</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-pre" src="" alt="Pre-event aligned satellite image">
+                  <div class="empty-placeholder" id="placeholder-pre"><span>Loading PRE image...</span></div>
+                </div>
+              </div>
+              <div class="split-card">
+                <h4>Target Capture (POST)</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-post" src="" alt="Post-event aligned satellite image">
+                  <div class="empty-placeholder" id="placeholder-post"><span>Loading POST image...</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 5: Alignment Diagnostics -->
+          <div class="view-pane" id="pane-diagnostics">
+            <div class="pane-header">
+              <h3>Geospatial Alignment & Footprint Diagnostics</h3>
+              <span class="pane-tag">Sub-Pixel Forward Affine Verification</span>
+            </div>
+            <div class="diag-grid">
+              <div class="diag-card">
+                <h4>Alignment Checkerboard (130px Alternating Grid)</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-checkerboard" src="" alt="Alignment Checkerboard Composite">
+                  <div class="empty-placeholder" id="placeholder-chk"><span>Diagnostic product</span></div>
+                </div>
+              </div>
+              <div class="diag-card">
+                <h4>50/50 Dual-Scene Alignment Blend</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-diag-blend" src="" alt="50/50 Alignment Blend">
+                  <div class="empty-placeholder" id="placeholder-blend"><span>Diagnostic product</span></div>
+                </div>
+              </div>
+              <div class="diag-card">
+                <h4>Valid Overlap Mask (Footprint Coverage)</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-overlap-mask" src="" alt="Valid Overlap Mask">
+                  <div class="empty-placeholder" id="placeholder-overlap"><span>Diagnostic product</span></div>
+                </div>
+              </div>
+              <div class="diag-card">
+                <h4>Side-by-Side Diagnostic Composite</h4>
+                <div class="split-img-wrapper">
+                  <img id="img-diag-sbs" src="" alt="Alignment Side-by-Side Mosaic">
+                  <div class="empty-placeholder" id="placeholder-sbs"><span>Diagnostic product</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Metadata Footer -->
+        <footer class="viewer-footer">
+          <div class="meta-item">
+            <span class="meta-label">Grid Dimensions:</span>
+            <span class="meta-val" id="meta-dims">1300 × 1300 px</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Coordinate Reference:</span>
+            <span class="meta-val">EPSG:4326 (WGS 84)</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Detection Algorithm:</span>
+            <span class="meta-val" id="meta-algo">Grayscale Luminance Difference</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Run ID:</span>
+            <span class="meta-val" id="meta-run-id">baseline</span>
+          </div>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
